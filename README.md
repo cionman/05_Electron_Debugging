@@ -1,253 +1,80 @@
 <img src="ASSETS/electron.png" alt="JavaScript">
 
-# Electron API Demo.
+# Electron Debugging.
 
-Electron API 를 사용해보는 간단한 예제 입니다.
+Electron 공식 홈페이지에서는 Debugging과 관련하여 3가지 문서를 제공합니다.
 
-## Menu(Main), shell(Both), dialog(Main) 활용 예제
+- [Debugging the Main Process](https://electron.atom.io/docs/tutorial/debugging-main-process/#debugging-the-main-process)
+- [Debugging the Main Process in node-inspector](https://electron.atom.io/docs/tutorial/debugging-main-process-node-inspector/#debugging-the-main-process-in-node-inspector)
+- [Debugging the Main Process in VSCode](https://electron.atom.io/docs/tutorial/debugging-main-process-vscode/)
 
- ### 메뉴를 생성하고 해당 메뉴에서 몇가지 기능을 실행해 봅니다.
+node-inspector의 설정을 잘못한 탓인지는 몰라도..node-inspector의 디버깅은 원할할게 디버깅이 되지 않았습니다.
 
-[Menu](https://electron.atom.io/docs/api/menu/) - 어플리케이션의 메뉴를 생성하는 API
+그에 반해 Visual Studio Code 에서는 깔끔하게 Main Process와 Renderer Process의 코드를 모두 디버깅할수 있었습니다. 그래서 Visual Studio Code의 디버깅 방법을 소개 합니다.
 
-[shell](https://electron.atom.io/docs/api/shell/) - file과 url을 사용자의 기본 어플리케이션으로 실행 및 관리해주는 API
+### Main Process Debugging 설정
 
-[dialog](https://electron.atom.io/docs/api/dialog/) - alert 및 file dialog창 생성 
+1. Visual Studio Code로 프로젝트를 오픈합니다. 
+2. 프로그램의 왼쪽 사이드바의 디버깅 메뉴로 들어갑니다.
+3. 상단에 톱니바퀴를 클릭하고 Node.js를 선택합니다. 그러면 프로젝트에 **.vscode**폴더가 생성이 되고 하위에 **launch.json**파일이 생성됩니다.
+<img src="ASSETS/3.png" alt="JavaScript">
 
-
- 1. 아래와 같이 menu.js파일을 생성합니다.
-변수 arrMenu에 해당하는 하나의 객체는 MenuItem 객체입니다.
-
-[MenuItem 객체 상세옵션](https://electron.atom.io/docs/api/menu-item/)
-
-**menu.js**
-
+4. launch.json 파일 화면 에 '구성추가' 버튼을 클릭하면 미리 구성되어 있는데 정보를 불러올 수 있는데 이 중에 'Node.js:Electron 주'를 선택하면 손쉽게 설정이 완료됩니다.
+<img src="ASSETS/6.png" alt="JavaScript">
+5. 만약 이런 부분을 찾을 수 없다면 launch.json파일에 아래와 같이 작성하면 됩니다.
 ```
-const {app, shell, dialog, Menu, BrowserWindow} = require('electron');
-const appName = app.getName();
-
-let arrMenu = [
-	{
-		label: '편집',
-		submenu: [
-			{
-				label: '실행취소',
-				role: 'undo'
-			},
-			{
-				label:'다시실행',
-				role: 'redo'
-			},
-			{
-				type: 'separator'
-			},
-			{
-				label:'잘라내기',
-				role: 'cut'
-			},
-			{
-				label:'복사',
-				role: 'copy'
-			},
-			{
-				label:'붙여넣기',
-				role: 'paste'
-			},
-			{
-				label:'모두선택',
-				role: 'selectall'
-			},
-			{
-				label:'삭제',
-				role: 'delete'
-			}
-		]
-	},
-	{
-		label: '창',
-		role: 'window',
-		submenu: [
-			{
-				label: '최소화',
-				accelerator: 'CmdOrCtrl+M',
-				role: 'minimize'
-			},
-			{
-				label: '&닫기',
-				accelerator: 'CmdOrCtrl+W',
-				role: 'close'
-			},
-			{
-				type: 'separator'
-			},
-			{
-				role: 'togglefullscreen'
-			}
-		]
-	},
-
-	{
-		label: '사이트',
-		role: 'help'
-	},
-	{
-		label:'포탈',
-		submenu:[
-			{
-                label: '&네이버'
-                ,click() {
-                shell.openExternal('http://naver.com');
-            	}
-			}
-		]
-	},
-    {
-        label:'클릭',
-        submenu:[
-            {
-                label: '다이얼로그창을 보여주세요'
-                ,click() {
-                dialog.showMessageBox({ message: "Electron의 dialog.showMessageBox 창!!",
-
-                    buttons: ["확인"]
-                });
-
-                }
-            },
-            {
-                label: '제목에 붉은배경색 칠하기'
-                ,click() {
-                BrowserWindow.getFocusedWindow().webContents.executeJavaScript('changeColor()');
-
-            }
-            }
-        ]
-    }
-
-];
-//Node.js 전역객체 인 process객체를 통해 OS를 구분하여 메뉴를 추가
-if (process.platform === 'darwin') {
-    arrMenu.unshift({
-		label: appName,
-		submenu: [
-			{
-        label:'프로그램 종료',
-				role: 'quit'
-			}
-		]
-	});
-} else {
-    arrMenu.unshift({
-		label: '파일',
-		submenu: [
-			{
-				label:'프로그램 종료',
-				role: 'quit'
-			}
-		]
-	});
-}
-// Menu객체를 생성
-var menu = Menu.buildFromTemplate(arrMenu);
-
-module.exports = menu;
-```
-
-2. Electron Application의 진입인 index.js 파일을 아래와 같이 수정 및 추가 합니다.
-
-**index.js**
-```
-const {app, BrowserWindow, Menu} = require('electron'); //Menu 추가
-const appMenu = require('./menu.js'); //추가
-...
-
-app.on('ready', () =>{
-   ...
-   Menu.setApplicationMenu(appMenu); //메뉴를 설정
-});
-```
-
-4. 실행 후 메뉴 생성을 확인 하고 메뉴를 눌러 봅니다.
-
-## remote(Renderer), BrowserWindow(Main), ipcMain(Main), ipcRenderer
-
-### Renderer process에서 새창을 생성하고, Main process와 통신해봅니다.
-
-[remote](https://electron.atom.io/docs/api/remote/) : Renderer Process에서 Main Process의 모듈을 사용이 가능하게 해주는 모듈
-
-[BrowserWindow](https://electron.atom.io/docs/api/browser-window/) : 창을 생성하고 컨트롤하는 모듈
-
-[ipcMain](https://electron.atom.io/docs/api/ipc-main/) : Main Process에서 Renderer Process로 비동기적으로 통신하는 모듈
-
-[ipcRenderer](https://electron.atom.io/docs/api/ipc-renderer/) : Renderer process에서 Main Process로 비동기적으로 통신하는 모듈
-
-1. 아래와 같이 newwin.js 를 작성합니다.
-
-**newwin.js**
-```
-const {BrowserWindow} = require('electron');
-exports.openWindow = (filename) => {
-    let win = new BrowserWindow(
+{
+    "version": "0.2.0",
+    "configurations": [
         {
-            width : 800
-            , minWidth:330
-            , height :500
-            , minHeight: 450
-            , icon: __dirname + '/resources/installer/Icon.ico'
-            , webPreferences :{ defaultFontSize : 14}
+            "type": "node",
+            "request": "launch",
+            "name": "Electron Main",
+            "runtimeExecutable": "${workspaceRoot}/node_modules/.bin/electron",
+            "windows": {
+                "runtimeExecutable": "${workspaceRoot}/node_modules/.bin/electron.cmd"
+            },
+            "program": "${workspaceRoot}/index.js",
+            "protocol": "legacy"
         }
-    );
-    win.loadURL(`file://${__dirname}/${filename}.html`);
+    ]
 }
 ```
-2. newwin.html파일을 생성합니다.
-3. remote.js 파일을 아래와 같이 생성합니다.
+### Renderer Process Debugging 설정
+Electron내의 webContents.openDevTools() 로 개발자도구를 오픈하여 렌더러 프로세스는 디버깅 할 수 있습니다.
 
-**remote.js**
+Visual Studio Code로 Renderer Process Debugging을 하려면 Visual Studio Code의 확장 프로그램 중 '**Debugger for Chrome**'을 반드시 설치 해야합니다.
+
+설치 후 아래의 코드를 launch.json 파일내 configurations 항목 의 배열내에 값을 추가합니다.
+
+Main process  설정과 다른점은 type의 값이 Chrome이고, runtimeArgs항목이 추가되고 name 항목이 변경되었습니다.
+
+주의할점은 Electron의 개발자도구를 켜면 Visual Studio Code에서는 디버깅이 되지 않습니다.
 ```
-const {remote, ipcRenderer} = require('electron');
-const newwin = remote.require('./newwin.js');
-const newWinButton = document.createElement('button');
-
-//remote, BrowserWindow 예제
-newWinButton.textContent = '새창 열기';
-newWinButton.addEventListener('click', () => newwin.openWindow('newwin'));
-document.body.appendChild(newWinButton);
-
-document.body.appendChild(document.createElement('div')); //줄바꿈
-
-//ipcMain과 ipcRender API예제
-const ipcButton = document.createElement('button');
-ipcButton.textContent='Main Process에 신호보내어 창 최대화';
-ipcButton.addEventListener('click', () => {
-    ipcRenderer.send('sendMsg', 'WindowMax' );
-});
-ipcRenderer.on('mainMsg',(event, args)=>{
-    alert(args);
-});
-
-document.body.appendChild(ipcButton);
-
-```
-4. index.html파일에 remote.js파일을 포함시킵니다.
-
-**index.html**
-```
-<script src="remote.js"></script>
+    {
+            "type": "chrome",
+            "request": "launch",
+            "name": "Electron Renderer",
+            "runtimeExecutable": "${workspaceRoot}/node_modules/.bin/electron",
+            "windows": {
+                "runtimeExecutable": "${workspaceRoot}/node_modules/.bin/electron.cmd"
+            },
+            "runtimeArgs": [
+                "${workspaceRoot}",
+                "--enable-logging",
+                "--remote-debugging-port=9222"
+            ],
+            "program": "${workspaceRoot}/index.js",
+            "protocol": "legacy"
+        }
 ```
 
-5. index.js 파일에 아래 코드를 추가합니다.
-```
-ipcMain.on('sendMsg',(event, args) =>{
-       //최대인지 확인후 최대화 또는 최대화 취소
-       win.isMaximized() ? win.unmaximize() : win.maximize();
-       event.sender.send('mainMsg', 'MainProcess에서 신호보냄');
-  });
-```
+### 디버깅 실행
+1. 코드에 원하는 곳에 Break Point를 지정합니다.
+2. 디버깅 구성에서 원하는 설정을 선택한 후 실행버튼을 누릅니다.
+<img src="ASSETS/7.png" alt="JavaScript">
 
-6. 실행 후 화면 안의 버튼을 눌러봅니다.
-
-## [Electron 디버깅 ➤](https://github.com/cionman/05_Electron_Debugging) 
+## [Electron 유용한 링크 ➤](https://github.com/cionman/06_Electron_Useful_Link) 
 
 
  

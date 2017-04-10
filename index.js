@@ -24,7 +24,7 @@ app.on('ready', () =>{
     win.loadURL(`file://${__dirname}/index.html`); //작은 따옴표가 아닌  back stick 기호(tab키 위)
 
     //개발자 도구 오픈
-   win.webContents.openDevTools();
+   //win.webContents.openDevTools();
    //메뉴 설정
    Menu.setApplicationMenu(appMenu);
 
