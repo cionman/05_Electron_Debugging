@@ -22,6 +22,7 @@ node-inspector의 설정을 잘못한 탓인지는 몰라도..node-inspector의 
 4. launch.json 파일 화면 에 '구성추가' 버튼을 클릭하면 미리 구성되어 있는데 정보를 불러올 수 있는데 이 중에 'Node.js:Electron 주'를 선택하면 손쉽게 설정이 완료됩니다.
 <img src="ASSETS/6.png" alt="JavaScript">
 5. 만약 이런 부분을 찾을 수 없다면 launch.json파일에 아래와 같이 작성하면 됩니다.
+
 ```
 {
     "version": "0.2.0",
